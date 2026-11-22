@@ -36,7 +36,7 @@ console.log('Membuka file:', htmlPath);
 await page.goto(htmlPath);
 
 await page.waitForFunction(() => window.READY === true, null, { timeout: 60000 });
-const duration = await page.evaluate(() => window.DUR || 28.73);
+const duration = await page.evaluate(() => window.DUR || 72.36);
 console.log(`Durasi animasi: ${duration} detik`);
 
 await page.evaluate(([w, h]) => window.setResolution(w, h), [W, H]);

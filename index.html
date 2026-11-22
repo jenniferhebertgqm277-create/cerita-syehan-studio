@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cerita Syehan — Episode 0 (Modern Studio)</title>
+<title>Cerita Syehan — Episode 0 (ElevenLabs Master)</title>
 <style>
   :root {
     --bg: #0F172A;
@@ -71,27 +71,39 @@
 <div class="controls">
   <button id="btn-play">Putar</button>
   <button id="btn-pause">Jeda</button>
-  <span id="time-display">0.00 / 28.73 s</span>
+  <span id="time-display">0.00 / 72.36 s</span>
 </div>
 
 <script>
 (() => {
 'use strict';
 
-const TOTAL_DURATION = 28.73;
+const TOTAL_DURATION = 72.36;
 const FPS = 30;
 const canvas = document.getElementById('webgl-canvas');
 
-// Subtitle cues & sentences
+// 21 Precise Subtitle Cues extracted from ElevenLabs Audio
 const SENTENCES = [
-  { t0: 0.1,  t1: 1.62, text: "WAIT!" },
-  { t0: 1.62, t1: 3.76, text: "Jangan di-scroll dulu!" },
-  { t0: 3.76, t1: 6.36, text: "Kenalin, gue Syehan." },
-  { t0: 6.36, t1: 8.98, text: "Dan selamat datang di Cerita Syehan!" },
-  { t0: 8.98, t1: 15.65, text: "Di akun ini, gue bakal nyeritain realita hidup sehari-hari yang rada gaje..." },
-  { t0: 15.65, t1: 21.60, text: "Mulai dari overthinking jam 2 pagi, sampai inovasi gila!" },
-  { t0: 21.60, t1: 26.32, text: "Biar gak ketinggalan, klik tombol FOLLOW sekarang!" },
-  { t0: 26.32, t1: 28.73, text: "Gas, kita mulai!" }
+  { t0: 0.0,   t1: 1.5,   text: "Eh, bentar bentar bentar..." },
+  { t0: 1.64,  t1: 5.58,  text: "STOP! Sebelum kalian scroll lewat, coba lihat baik-baik." },
+  { t0: 6.04,  t1: 10.48, text: "Animasi 3D ini... 100% dibuat dari KODE!" },
+  { t0: 10.98, t1: 13.84, text: "Bukan aplikasi desain, bukan AI video generator." },
+  { t0: 14.60, t1: 16.34, text: "Murni dari ketikan keyboard!" },
+  { t0: 17.14, t1: 18.88, text: "Oke, kenalin, gue Syehan!" },
+  { t0: 19.40, t1: 21.66, text: "Dan ini adalah... Cerita Syehan." },
+  { t0: 22.28, t1: 28.24, text: "Di akun ini, gue bakal ceritain kehidupan sehari-hari gue yang..." },
+  { t0: 28.24, t1: 29.62, text: "...agak nggak normal." },
+  { t0: 30.22, t1: 33.16, text: "Kayak misalnya, jam 2 pagi. Harusnya tidur kan?" },
+  { t0: 33.74, t1: 38.96, text: "Tapi otak gue malah mikir: 'Gimana kalau bikin robot nyiram tanaman otomatis?'" },
+  { t0: 39.44, t1: 43.92, text: "Dan somehow... gue beneran nyoba bikin jam 2 pagi!" },
+  { t0: 44.28, t1: 48.48, text: "Atau yang lebih parah, nge-debug kode sampai lupa makan seharian." },
+  { t0: 48.96, t1: 51.58, text: "Pas sadar, perut udah bunyi kayak alarm kebakaran!" },
+  { t0: 52.16, t1: 56.84, text: "Tapi di balik kekacauan itu, ada cerita seru & ide-ide gila..." },
+  { t0: 56.84, t1: 61.38, text: "...dan eksperimen yang kadang berhasil, kadang meledak!" },
+  { t0: 61.84, t1: 65.58, text: "Kalau lo suka nonton orang struggle sambil ketawa..." },
+  { t0: 66.04, t1: 67.06, text: "...ini akun yang tepat!" },
+  { t0: 67.58, t1: 70.04, text: "FOLLOW sekarang biar gak ketinggalan episode berikutnya!" },
+  { t0: 70.50, t1: 72.36, text: "Gas! Kita mulai dari sini!" }
 ];
 
 // Three.js Scene Setup
@@ -108,12 +120,6 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 renderer.outputEncoding = THREE.sRGBEncoding;
 
-// Helper: Rounded Box geometry
-function createRoundedBox(w, h, d, r, s) {
-  const geom = new THREE.BoxGeometry(w, h, d);
-  return geom;
-}
-
 // -------------------------------------------------------------
 // LIGHTING (Modern Warm Creator Ambience)
 // -------------------------------------------------------------
@@ -125,8 +131,6 @@ keyLight.position.set(3, 5, 4);
 keyLight.castShadow = true;
 keyLight.shadow.mapSize.width = 1024;
 keyLight.shadow.mapSize.height = 1024;
-keyLight.shadow.camera.near = 0.5;
-keyLight.shadow.camera.far = 15;
 scene.add(keyLight);
 
 const fillLight = new THREE.DirectionalLight(0xE0F2FE, 0.55);
@@ -145,7 +149,7 @@ scene.add(roomGroup);
 
 // Floor
 const floorMat = new THREE.MeshStandardMaterial({ color: 0xE8DFD5, roughness: 0.85 });
-const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), floorMat);
 floor.rotation.x = -Math.PI / 2;
 floor.position.y = -0.5;
 floor.receiveShadow = true;
@@ -153,7 +157,7 @@ roomGroup.add(floor);
 
 // Back Wall
 const wallMat = new THREE.MeshStandardMaterial({ color: 0xF7F4EB, roughness: 0.9 });
-const wall = new THREE.Mesh(new THREE.PlaneGeometry(20, 12), wallMat);
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(24, 14), wallMat);
 wall.position.set(0, 5, -3.5);
 wall.receiveShadow = true;
 roomGroup.add(wall);
@@ -181,25 +185,40 @@ screenGroup.position.set(0, 1.75, -0.85);
 const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 0.06), new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.4 }));
 screenGroup.add(screenFrame);
 
-// Screen display (Modern Code Editor + Wave)
+// Screen display (Modern Code Editor)
 const screenCanvas = document.createElement('canvas');
 screenCanvas.width = 512;
 screenCanvas.height = 256;
 const sg = screenCanvas.getContext('2d');
-sg.fillStyle = '#0B132B';
-sg.fillRect(0, 0, 512, 256);
-sg.fillStyle = '#1C2541';
-sg.fillRect(10, 10, 492, 236);
-sg.fillStyle = '#48CAE4';
-sg.font = 'bold 20px monospace';
-sg.fillText('CERITA_SYEHAN.py', 25, 45);
-sg.fillStyle = '#90E0EF';
-sg.font = '14px monospace';
-sg.fillText('import syehan_life as life', 25, 80);
-sg.fillText('def daily_chaos():', 25, 110);
-sg.fillText('    brain_overthinking()', 45, 140);
-sg.fillText('    launch_crazy_experiment()', 45, 170);
-sg.fillText('    print("Gas Kita Mulai!")', 45, 200);
+function updateScreenTexture(mode = 'code') {
+  sg.fillStyle = mode === 'error' ? '#7F1D1D' : '#0B132B';
+  sg.fillRect(0, 0, 512, 256);
+  sg.fillStyle = mode === 'error' ? '#991B1B' : '#1C2541';
+  sg.fillRect(10, 10, 492, 236);
+  
+  if (mode === 'error') {
+    sg.fillStyle = '#F87171';
+    sg.font = 'bold 28px monospace';
+    sg.fillText('CRITICAL ERROR: NULL POINTER', 25, 60);
+    sg.fillStyle = '#FECACA';
+    sg.font = '18px monospace';
+    sg.fillText('Debugging at 24:00:00...', 25, 110);
+    sg.fillText('Hunger level: 999%', 25, 150);
+    sg.fillText('Stomach Alarm: RINGING!', 25, 190);
+  } else {
+    sg.fillStyle = '#48CAE4';
+    sg.font = 'bold 20px monospace';
+    sg.fillText('CERITA_SYEHAN_STUDIO.py', 25, 45);
+    sg.fillStyle = '#90E0EF';
+    sg.font = '14px monospace';
+    sg.fillText('import three_d_animation as anim', 25, 80);
+    sg.fillText('def main():', 25, 110);
+    sg.fillText('    syehan = Character("Syehan")', 45, 140);
+    sg.fillText('    syehan.build_robot_2am()', 45, 170);
+    sg.fillText('    render_ep0("GAS CUY!")', 45, 200);
+  }
+}
+updateScreenTexture('code');
 
 const screenTex = new THREE.CanvasTexture(screenCanvas);
 const screenDisplay = new THREE.Mesh(new THREE.PlaneGeometry(2.32, 0.92), new THREE.MeshBasicMaterial({ map: screenTex }));
@@ -234,7 +253,7 @@ lampShade.position.set(-1.05, 1.9, -0.3);
 lampShade.rotation.z = 0.8;
 roomGroup.add(lampBase, lampStem, lampShade);
 
-// Modern Indoor Plant in Pot
+// Modern Potted Plant
 const potMat = new THREE.MeshStandardMaterial({ color: 0xD97706, roughness: 0.7 });
 const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.28, 16), potMat);
 pot.position.set(1.4, 1.35, -0.35);
@@ -276,18 +295,17 @@ body.position.y = 0.5;
 body.castShadow = true;
 hips.add(body);
 
-// Hoodie Pocket (Kangoroo pocket)
 const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.32, 0.08), hoodieMat);
 pocket.position.set(0, 0.35, 0.32);
 hips.add(pocket);
 
-// Legs & Sneakers (Seated / Relaxed pose behind desk)
+// Legs & Sneakers (Seated / Relaxed pose)
 function createLeg(x) {
   const legG = new THREE.Group();
   legG.position.set(x, 0, 0);
   const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.55, 0.32), pantsMat);
   thigh.position.set(0, -0.25, 0.15);
-  thigh.rotation.x = Math.PI / 3; // Sitting posture
+  thigh.rotation.x = Math.PI / 3;
   legG.add(thigh);
   
   const shin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 0.26), pantsMat);
@@ -334,13 +352,12 @@ head.position.y = 0.5;
 head.castShadow = true;
 headGroup.add(head);
 
-// Modern Messy Textured Hair
+// Hair Group
 const hairGroup = new THREE.Group();
 const hairTop = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.38, 1.05), hairMat);
 hairTop.position.set(0, 1.02, 0.02);
 hairGroup.add(hairTop);
 
-// Hair tufts / bangs
 for (let i = -3; i <= 3; i++) {
   const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 6), hairMat);
   tuft.position.set(i * 0.14, 0.95, 0.52);
@@ -399,7 +416,7 @@ earpadR.rotation.z = -0.4;
 headGroup.add(earpadL, earpadR);
 
 // -------------------------------------------------------------
-// DYNAMIC PROPS & MEME POP-UPS
+// DYNAMIC PROPS & KINETIC MEME ASSETS (8 SCENE ACTS)
 // -------------------------------------------------------------
 const propsGroup = new THREE.Group();
 scene.add(propsGroup);
@@ -429,46 +446,37 @@ badgeMesh.position.set(0, 2.8, 0.8);
 badgeMesh.visible = false;
 propsGroup.add(badgeMesh);
 
-// Prop 2: Floating Modern Smartphone with Notifications (Meme Scene 3)
-const phoneGroup = new THREE.Group();
-phoneGroup.position.set(0.9, 2.2, 0.6);
-const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.05, 0.05), new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.2 }));
-phoneGroup.add(phoneBody);
+// Prop 2: Floating 3D Keyboard (Act 2: 100% Code Proof)
+const keyboardGroup = new THREE.Group();
+keyboardGroup.position.set(0, 1.45, 1.1);
+const kbBody = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.08, 0.55), new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.4 }));
+keyboardGroup.add(kbBody);
+for (let row = 0; row < 3; row++) {
+  for (let col = 0; col < 8; col++) {
+    const key = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.06, 0.12), new THREE.MeshStandardMaterial({ color: (row + col) % 2 === 0 ? 0x38BDF8 : 0xF8FAFC }));
+    key.position.set(-0.55 + col * 0.16, 0.06, -0.16 + row * 0.16);
+    keyboardGroup.add(key);
+  }
+}
+keyboardGroup.visible = false;
+propsGroup.add(keyboardGroup);
 
-const notifCanvas = document.createElement('canvas');
-notifCanvas.width = 256;
-notifCanvas.height = 480;
-const ntc = notifCanvas.getContext('2d');
-ntc.fillStyle = '#0F172A';
-ntc.fillRect(0, 0, 256, 480);
-ntc.fillStyle = '#EF4444';
-ntc.beginPath();
-ntc.roundRect(15, 25, 226, 80, 14);
-ntc.fill();
-ntc.fillStyle = '#FFFFFF';
-ntc.font = 'bold 20px sans-serif';
-ntc.fillText('💬 Chat (99+)', 30, 60);
-ntc.font = '14px sans-serif';
-ntc.fillText('Paket COD udah di depan...', 30, 85);
+// Prop 3: Floating Question Marks ??? (Act 4: Absurd Moments)
+const qMarkCanvas = document.createElement('canvas');
+qMarkCanvas.width = 256;
+qMarkCanvas.height = 256;
+const qmc = qMarkCanvas.getContext('2d');
+qmc.fillStyle = '#F59E0B';
+qmc.font = '900 160px sans-serif';
+qmc.textAlign = 'center';
+qmc.fillText('???', 128, 190);
+const qMarkTex = new THREE.CanvasTexture(qMarkCanvas);
+const qMarkMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.9), new THREE.MeshBasicMaterial({ map: qMarkTex, transparent: true }));
+qMarkMesh.position.set(0.8, 2.7, 0.7);
+qMarkMesh.visible = false;
+propsGroup.add(qMarkMesh);
 
-ntc.fillStyle = '#F59E0B';
-ntc.beginPath();
-ntc.roundRect(15, 125, 226, 80, 14);
-ntc.fill();
-ntc.fillStyle = '#FFFFFF';
-ntc.font = 'bold 20px sans-serif';
-ntc.fillText('⚠️ Deadline Besok', 30, 160);
-ntc.font = '14px sans-serif';
-ntc.fillText('Progres: Masih Nol Persen', 30, 185);
-
-const notifTex = new THREE.CanvasTexture(notifCanvas);
-const notifMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 1.0), new THREE.MeshBasicMaterial({ map: notifTex }));
-notifMesh.position.z = 0.03;
-phoneGroup.add(notifMesh);
-phoneGroup.visible = false;
-propsGroup.add(phoneGroup);
-
-// Prop 3: Floating 02:00 AM Digital Clock & Idea Bulb (Scene 4)
+// Prop 4: Floating 02:00 AM Digital Clock (Act 5: Jam 2 Pagi)
 const clockCanvas = document.createElement('canvas');
 clockCanvas.width = 380;
 clockCanvas.height = 140;
@@ -495,7 +503,41 @@ bulbGroup.add(bulbMesh);
 bulbGroup.visible = false;
 propsGroup.add(bulbGroup);
 
-// Quirky 3D Invention Gadget (Mini Turbo Prop)
+// Cute 3D Mini Robot (Plant Watering Experiment)
+const robotGroup = new THREE.Group();
+robotGroup.position.set(0.95, 1.45, -0.1);
+const rHead = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.28, 0.28), new THREE.MeshStandardMaterial({ color: 0x0284C7, metalness: 0.5, roughness: 0.3 }));
+const rEye = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.08, 0.05), new THREE.MeshBasicMaterial({ color: 0x38BDF8 }));
+rEye.position.set(0, 0.04, 0.14);
+const rCan = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.24, 12), new THREE.MeshStandardMaterial({ color: 0x10B981 }));
+rCan.rotation.z = Math.PI / 2 + 0.3;
+rCan.position.set(0.22, -0.05, 0.1);
+robotGroup.add(rHead, rEye, rCan);
+robotGroup.visible = false;
+propsGroup.add(robotGroup);
+
+// Prop 5: Red Error Pop-ups (Act 6: Debugging Crisis)
+const errCanvas = document.createElement('canvas');
+errCanvas.width = 380;
+errCanvas.height = 160;
+const erc = errCanvas.getContext('2d');
+erc.fillStyle = '#EF4444';
+erc.beginPath();
+erc.roundRect(10, 10, 360, 140, 16);
+erc.fill();
+erc.fillStyle = '#FFFFFF';
+erc.font = 'bold 32px monospace';
+erc.textAlign = 'center';
+erc.fillText('⚠️ ERROR 404', 190, 65);
+erc.font = 'bold 22px monospace';
+erc.fillText('HUNGER OVERFLOW!', 190, 115);
+const errTex = new THREE.CanvasTexture(errCanvas);
+const errMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 0.65), new THREE.MeshBasicMaterial({ map: errTex, transparent: true }));
+errMesh.position.set(0, 2.6, 0.8);
+errMesh.visible = false;
+propsGroup.add(errMesh);
+
+// Prop 6: Crazy Spinning Inventions & Explosion Smoke (Act 7)
 const gadgetGroup = new THREE.Group();
 gadgetGroup.position.set(0, 1.45, 0.2);
 const gizmoCore = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.35, 16), new THREE.MeshStandardMaterial({ color: 0x0EA5E9, metalness: 0.6, roughness: 0.3 }));
@@ -505,7 +547,18 @@ gadgetGroup.add(gizmoCore, gizmoRotor);
 gadgetGroup.visible = false;
 propsGroup.add(gadgetGroup);
 
-// Prop 4: Pixel Deal-With-It Sunglasses (Scene 5)
+// Cartoon Smoke Puff on Explosion
+const smokeGroup = new THREE.Group();
+smokeGroup.position.set(0, 1.8, 0.3);
+for (let i = 0; i < 8; i++) {
+  const sm = new THREE.Mesh(new THREE.SphereGeometry(0.22, 8, 8), new THREE.MeshBasicMaterial({ color: 0xD1D5DB, transparent: true, opacity: 0.85 }));
+  sm.position.set((Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.7, (Math.random() - 0.5) * 0.7);
+  smokeGroup.add(sm);
+}
+smokeGroup.visible = false;
+propsGroup.add(smokeGroup);
+
+// Prop 7: Pixel Deal-With-It Sunglasses (Act 8: Swag Finale)
 const shadesGroup = new THREE.Group();
 const shMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
 const shL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.06), shMat);
@@ -523,7 +576,7 @@ const followCanvas = document.createElement('canvas');
 followCanvas.width = 512;
 followCanvas.height = 160;
 const flc = followCanvas.getContext('2d');
-flc.fillStyle = '#EF4444'; // TikTok red
+flc.fillStyle = '#EF4444';
 flc.beginPath();
 flc.roundRect(10, 10, 492, 140, 70);
 flc.fill();
@@ -538,7 +591,7 @@ followMesh.visible = false;
 propsGroup.add(followMesh);
 
 // 3D Confetti Particles
-const CONFETTI_COUNT = 75;
+const CONFETTI_COUNT = 90;
 const confettiInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.09, 0.09, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff }), CONFETTI_COUNT);
 const confColors = [0x38BDF8, 0xF59E0B, 0xEF4444, 0x10B981, 0x8B5CF6];
 const dummy = new THREE.Object3D();
@@ -546,12 +599,12 @@ const confettiData = [];
 for (let i = 0; i < CONFETTI_COUNT; i++) {
   confettiInst.setColorAt(i, new THREE.Color(confColors[i % confColors.length]));
   confettiData.push({
-    x: (Math.random() - 0.5) * 3.5,
-    y: 1.5 + Math.random() * 3.0,
-    z: (Math.random() - 0.5) * 2.0,
+    x: (Math.random() - 0.5) * 3.8,
+    y: 1.5 + Math.random() * 3.5,
+    z: (Math.random() - 0.5) * 2.2,
     rx: Math.random() * 6,
     ry: Math.random() * 6,
-    vy: -1.2 - Math.random() * 2.0
+    vy: -1.2 - Math.random() * 2.2
   });
 }
 confettiInst.instanceColor.needsUpdate = true;
@@ -591,17 +644,16 @@ function drawSubtitles(t) {
   
   subPlane.visible = true;
   subCtx.save();
-  subCtx.font = '900 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  subCtx.font = '900 50px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
   subCtx.textAlign = 'center';
   
-  // Text wrap helper
   const text = currentSentence.text;
   const words = text.split(' ');
   let line = '';
   const lines = [];
   for (let w of words) {
     const testLine = line + (line ? ' ' : '') + w;
-    if (subCtx.measureText(testLine).width > 880 && line) {
+    if (subCtx.measureText(testLine).width > 860 && line) {
       lines.push(line);
       line = w;
     } else {
@@ -615,16 +667,13 @@ function drawSubtitles(t) {
   
   lines.forEach((l, idx) => {
     const ly = startY + idx * lineH;
-    
-    // Black pill background behind subtitles
     const lw = subCtx.measureText(l).width;
-    subCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    subCtx.fillStyle = 'rgba(15, 23, 42, 0.90)';
     subCtx.beginPath();
     subCtx.roundRect(540 - lw / 2 - 24, ly - 44, lw + 48, 58, 16);
     subCtx.fill();
     
-    // Glowing text
-    subCtx.fillStyle = '#FBBF24'; // Yellow pop highlight
+    subCtx.fillStyle = '#FBBF24';
     subCtx.fillText(l, 540, ly);
   });
   
@@ -633,128 +682,200 @@ function drawSubtitles(t) {
 }
 
 // -------------------------------------------------------------
-// MAIN TIMELINE ANIMATION FUNCTION (renderFrame at time t)
+// MAIN TIMELINE ANIMATION FUNCTION (72.36s / 8 Acts)
 // -------------------------------------------------------------
 function renderFrame(t) {
-  // 1. Camera Animation & Staging
-  if (t < 3.76) {
-    // SHOT 1: THE HOOK
-    const shake = t < 0.6 ? Math.sin(t * 45) * 0.05 * Math.exp(-t * 4) : 0;
-    camera.position.set(shake, 1.8, 3.8); // Closer zoom punch
+  // Reset all prop visibilities
+  badgeMesh.visible = false;
+  keyboardGroup.visible = false;
+  qMarkMesh.visible = false;
+  clockMesh.visible = false;
+  bulbGroup.visible = false;
+  robotGroup.visible = false;
+  errMesh.visible = false;
+  gadgetGroup.visible = false;
+  smokeGroup.visible = false;
+  shadesGroup.visible = false;
+  followMesh.visible = false;
+  confettiInst.visible = false;
+  
+  // Default lighting
+  ambientLight.color.setHex(0xFFF7ED);
+  ambientLight.intensity = 0.75;
+  keyLight.color.setHex(0xFFFBF0);
+  
+  if (t < 5.58) {
+    // ---------------------------------------------------------
+    // ACT 1: THE HOOK & STOP! (0.0s - 5.58s)
+    // ---------------------------------------------------------
+    const shake = (t > 1.6 && t < 2.4) ? Math.sin(t * 50) * 0.08 * Math.exp(-(t - 1.6) * 3) : 0;
+    camera.position.set(shake, 1.8, 3.6); // Tight dramatic punch
     camera.lookAt(0, 1.85, 0.45);
     
-    // Syehan raises hand to camera: "Stop/Wait!"
-    armR.rotation.x = -1.4;
-    armR.rotation.z = -0.4;
-    handR.position.set(0.1, -0.2, 0.4);
-    headGroup.rotation.y = Math.sin(t * 8) * 0.05;
-    headGroup.rotation.x = -0.1;
+    // Hand raised right into camera lens on STOP!
+    if (t > 1.6) {
+      armR.rotation.x = -1.45;
+      armR.rotation.z = -0.3;
+      handR.position.set(0.1, -0.2, 0.45);
+      mouth.scale.set(1.5, 1.7, 1.0); // Shocked open mouth
+      browL.position.y = 0.79; browR.position.y = 0.79;
+    } else {
+      armR.rotation.x = -0.3;
+      mouth.scale.set(1.0, 0.8, 1.0);
+    }
+    headGroup.rotation.y = Math.sin(t * 6) * 0.04;
     
-    // Shocked / alert eyebrows
-    browL.position.y = 0.78;
-    browR.position.y = 0.78;
-    mouth.scale.set(1.4, 1.8, 1.0); // Open mouth "Wait!"
-    
-  } else if (t < 8.98) {
-    // SHOT 2: GREETING & MODERN ROOM REVEAL
-    const p = (t - 3.76) / (8.98 - 3.76);
-    camera.position.set(0.3 * Math.sin(p * Math.PI), 1.85, 4.6);
+  } else if (t < 16.34) {
+    // ---------------------------------------------------------
+    // ACT 2: 100% CODE PROOF (5.58s - 16.34s)
+    // ---------------------------------------------------------
+    const prog = (t - 5.58) / (16.34 - 5.58);
+    camera.position.set(0.4 * Math.sin(prog * Math.PI), 1.95, 4.4);
     camera.lookAt(0, 1.7, 0);
     
-    // Syehan waving friendly
-    armR.rotation.x = -1.1;
-    armR.rotation.z = Math.sin(t * 7) * 0.4 + 0.6;
+    // Syehan typing gesture & proud pose
+    armL.rotation.x = -0.8 + Math.sin(t * 12) * 0.1;
+    armR.rotation.x = -0.8 + Math.cos(t * 12) * 0.1;
+    
+    // Floating keyboard visible
+    keyboardGroup.visible = true;
+    keyboardGroup.position.y = 1.35 + Math.sin(t * 4) * 0.03;
+    
+    headGroup.rotation.set(-0.05, Math.sin(t * 3) * 0.06, 0);
+    mouth.scale.set(1.1, 0.9, 1.0);
+    browL.position.y = 0.75; browR.position.y = 0.75;
+    
+  } else if (t < 22.28) {
+    // ---------------------------------------------------------
+    // ACT 3: HOST INTRO "GUE SYEHAN" (16.34s - 22.28s)
+    // ---------------------------------------------------------
+    camera.position.set(0.2, 1.85, 4.5);
+    camera.lookAt(0, 1.7, 0);
+    
+    // Friendly wave
+    armR.rotation.x = -1.2;
+    armR.rotation.z = Math.sin(t * 8) * 0.4 + 0.6;
     armL.rotation.x = 0;
     
-    // Smile
-    headGroup.rotation.set(0.05, Math.sin(t * 3) * 0.08, 0.02);
-    mouth.scale.set(1.2, 0.6, 1.0);
-    browL.position.y = 0.74; browR.position.y = 0.74;
+    headGroup.rotation.set(0.05, Math.sin(t * 2) * 0.08, 0.04);
+    mouth.scale.set(1.2, 0.6, 1.0); // Big friendly smile
     
-    // Show Name Badge
     badgeMesh.visible = true;
-    badgeMesh.scale.setScalar(Math.min(1.0, (t - 3.76) * 3));
+    badgeMesh.scale.setScalar(Math.min(1.0, (t - 16.8) * 3));
     
-  } else if (t < 15.65) {
-    // SHOT 3: ABSURD PROBLEMS & OVERWHELM
-    badgeMesh.visible = false;
-    camera.position.set(-0.2, 1.8, 4.2);
+  } else if (t < 30.22) {
+    // ---------------------------------------------------------
+    // ACT 4: AGAK NGGAK NORMAL / ABSURD (22.28s - 30.22s)
+    // ---------------------------------------------------------
+    // Playful Dutch angle camera tilt
+    camera.position.set(-0.35, 1.8, 4.3);
+    camera.rotation.z = -0.06;
     camera.lookAt(0, 1.75, 0.2);
     
-    // Syehan scratching head in confusion
+    // Syehan scratching head in funny embarrassment
     armR.rotation.x = -1.8;
     armR.rotation.z = -0.6;
     armR.rotation.y = 0.3;
     handR.position.set(-0.15, 0.2, 0.1);
     
-    headGroup.rotation.z = -0.15; // Tilted head
-    browL.position.y = 0.70; browR.position.y = 0.78; // One brow raised
-    mouth.scale.set(0.8, 0.7, 1.0);
+    headGroup.rotation.z = -0.18;
+    browL.position.y = 0.71; browR.position.y = 0.78;
+    mouth.scale.set(0.8, 0.65, 1.0);
     
-    // Phone & Notifs floating
-    phoneGroup.visible = true;
-    phoneGroup.position.y = 2.2 + Math.sin(t * 3) * 0.08;
-    phoneGroup.rotation.y = Math.sin(t * 2) * 0.2;
+    if (t > 27.5) {
+      qMarkMesh.visible = true;
+      qMarkMesh.position.y = 2.7 + Math.sin(t * 6) * 0.06;
+    }
     
-  } else if (t < 21.60) {
-    // SHOT 4: OVERTHINKING & CRAZY INNOVATION
-    phoneGroup.visible = false;
-    
-    // Room mood changes
-    ambientLight.color.setHex(0x38BDF8); // Midnight blue
-    ambientLight.intensity = 0.55;
-    keyLight.color.setHex(0xFBBF24); // Warm golden desk lamp
-    
-    camera.position.set(0, 1.9, 4.3);
+  } else if (t < 43.92) {
+    // ---------------------------------------------------------
+    // ACT 5: JAM 2 PAGI & ROBOT EXPERIMENT (30.22s - 43.92s)
+    // ---------------------------------------------------------
+    camera.rotation.z = 0;
+    camera.position.set(0, 1.9, 4.4);
     camera.lookAt(0, 1.8, 0);
     
-    // Clock 02:00 AM visible
+    // Dark midnight mood lighting
+    ambientLight.color.setHex(0x1E3A8A); // Deep blue
+    ambientLight.intensity = 0.55;
+    keyLight.color.setHex(0xFBBF24); // Warm desk lamp
+    
     clockMesh.visible = true;
     
-    if (t > 17.5) {
-      // Lightbulb pops ON! Idea moment!
+    if (t > 33.5) {
       bulbGroup.visible = true;
       bulbGroup.position.y = 3.1 + Math.sin(t * 6) * 0.05;
       
-      gadgetGroup.visible = true;
-      gizmoRotor.rotation.y = t * 12; // Spinning gizmo
+      robotGroup.visible = true;
+      robotGroup.rotation.y = Math.sin(t * 4) * 0.3;
       
-      headGroup.rotation.set(-0.1, 0, 0);
+      headGroup.rotation.set(-0.08, 0, 0);
       mouth.scale.set(1.3, 1.2, 1.0);
       browL.position.y = 0.77; browR.position.y = 0.77;
     }
     
+  } else if (t < 51.58) {
+    // ---------------------------------------------------------
+    // ACT 6: DEBUGGING CRISIS / LUPA MAKAN (44.28s - 51.58s)
+    // ---------------------------------------------------------
+    camera.position.set(0, 1.8, 4.2);
+    camera.lookAt(0, 1.7, 0);
+    
+    updateScreenTexture('error');
+    errMesh.visible = true;
+    errMesh.position.y = 2.6 + Math.sin(t * 8) * 0.04;
+    
+    // Slumped exhausted posture, clutching stomach
+    armL.rotation.x = -0.6; armL.rotation.z = 0.4;
+    armR.rotation.x = -0.6; armR.rotation.z = -0.4;
+    hips.position.y = 0.98;
+    headGroup.rotation.set(0.12, 0, 0);
+    browL.position.y = 0.70; browR.position.y = 0.70;
+    mouth.scale.set(0.9, 0.5, 1.0);
+    
+  } else if (t < 61.38) {
+    // ---------------------------------------------------------
+    // ACT 7: GADGET EXPLOSION / KADANG MELEDAK (52.16s - 61.38s)
+    // ---------------------------------------------------------
+    updateScreenTexture('code');
+    camera.position.set(0, 1.85, 4.3);
+    camera.lookAt(0, 1.7, 0);
+    
+    gadgetGroup.visible = true;
+    gizmoRotor.rotation.y = t * 18; // Crazy spinning
+    
+    if (t > 57.5) {
+      smokeGroup.visible = true; // Smoke puff
+      smokeGroup.scale.setScalar(Math.min(1.5, (t - 57.5) * 2));
+      mouth.scale.set(1.4, 1.5, 1.0); // Shocked
+    }
+    
   } else {
-    // SHOT 5: SWAG CTA & GRAND FINALE
-    clockMesh.visible = false;
-    bulbGroup.visible = false;
-    gadgetGroup.visible = false;
-    
-    ambientLight.color.setHex(0xFFF7ED);
-    ambientLight.intensity = 0.8;
-    
+    // ---------------------------------------------------------
+    // ACT 8: GRAND FINALE & TIKTOK FOLLOW CTA (61.38s - 72.36s)
+    // ---------------------------------------------------------
     camera.position.set(0, 1.85, 4.5);
     camera.lookAt(0, 1.7, 0);
     
-    // Deal With It Sunglasses drop
+    // Deal With It Shades drop
     shadesGroup.visible = true;
-    const dropProg = Math.min(1.0, (t - 21.6) * 1.5);
-    shadesGroup.position.set(0, 2.8 - dropProg * 0.75, 0.85); // Drops over eyes
+    const dropProg = Math.min(1.0, (t - 61.5) * 1.6);
+    shadesGroup.position.set(0, 2.8 - dropProg * 0.75, 0.85);
     
     // Follow button drops and bounces
     followMesh.visible = true;
-    const bounceProg = Math.min(1.0, (t - 22.0) * 2.0);
+    const bounceProg = Math.min(1.0, (t - 62.0) * 2.0);
     followMesh.position.y = 3.5 - bounceProg * 0.7 + Math.sin(t * 8) * 0.04;
     
-    // Both thumbs pointing at button
+    // Thumbs pointing at follow button
     armL.rotation.x = -1.2; armL.rotation.z = -0.5;
     armR.rotation.x = -1.2; armR.rotation.z = 0.5;
     
-    // Confetti particles
+    // 3D Confetti particles celebration
     confettiInst.visible = true;
     for (let i = 0; i < CONFETTI_COUNT; i++) {
       const p = confettiData[i];
-      const age = t - 21.6;
+      const age = t - 61.5;
       dummy.position.set(p.x, p.y + p.vy * age, p.z);
       dummy.rotation.set(p.rx + age * 2, p.ry + age * 2, 0);
       dummy.updateMatrix();
@@ -763,13 +884,13 @@ function renderFrame(t) {
     confettiInst.instanceMatrix.needsUpdate = true;
   }
   
-  // Natural subtle breathing
-  hips.position.y = 1.05 + Math.sin(t * 3.5) * 0.02;
+  // Natural idle breathing
+  hips.position.y = (t >= 44.28 && t < 51.58) ? 0.98 : 1.05 + Math.sin(t * 3.5) * 0.02;
   
-  // Draw subtitles (texture update)
+  // Update subtitles
   drawSubtitles(t);
-
-  // Render 3D Scene + Subtitles
+  
+  // Render scene + overlay
   renderer.render(scene, camera);
 }
 
@@ -785,7 +906,7 @@ window.setResolution = (w, h) => {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
   subCanvas.width = w;
-  subCanvas.height = h;
+  subCanvas.height = Math.round(w * (600 / 1080));
 };
 
 // Local Interactive Player
@@ -827,7 +948,7 @@ btnPause.addEventListener('click', () => {
   }
 });
 
-// Render initial frame (t=0)
+// Render initial frame
 renderFrame(0);
 
 })();
