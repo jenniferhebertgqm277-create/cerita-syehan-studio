@@ -1,0 +1,45 @@
+{
+  "sentences": [
+    {
+      "s": "Wait!",
+      "t": 0.1,
+      "d": 1.575
+    },
+    {
+      "s": "Jangan di-scroll dulu!",
+      "t": 1.625,
+      "d": 2.1375
+    },
+    {
+      "s": "Kenalin, gue Syehan.",
+      "t": 3.7625,
+      "d": 2.6
+    },
+    {
+      "s": "Dan selamat datang di Cerita Syehan!",
+      "t": 6.3625,
+      "d": 2.625
+    },
+    {
+      "s": "Di akun ini, gue bakal nyeritain realita hidup sehari-hari yang... ya, rada gaje dan sering kena masalah absurd.",
+      "t": 8.9875,
+      "d": 6.6625
+    },
+    {
+      "s": "Mulai dari overthinking jam dua pagi, sampai eksperimen dan inovasi gila yang bikin tetangga curiga!",
+      "t": 15.65,
+      "d": 5.95
+    },
+    {
+      "s": "Biar kalian nggak ketinggalan kekacauan seru berikutnya, klik tombol follow sekarang!",
+      "t": 21.6,
+      "d": 4.725
+    },
+    {
+      "s": "Gas, kita mulai!",
+      "t": 26.325,
+      "d": 2.4
+    }
+  ],
+  "words": []
+}

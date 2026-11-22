@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cerita Syehan — Episode 0 (Modern Studio)</title>
+<style>
+  :root {
+    --bg: #0F172A;
+    --card: #1E293B;
+    --accent: #38BDF8;
+    --text: #F8FAFC;
+    --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    overflow: hidden;
+  }
+  #canvas-container {
+    position: relative;
+    width: 360px;
+    height: 640px;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.6);
+    background: #000;
+  }
+  #webgl-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  .controls {
+    margin-top: 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+  button {
+    background: #2563EB;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button:hover { background: #1D4ED8; }
+  #time-display {
+    font-family: monospace;
+    font-size: 14px;
+    color: #94A3B8;
+  }
+</style>
+<script src="assets/three.min.js"></script>
+</head>
+<body>
+
+<div id="canvas-container">
+  <canvas id="webgl-canvas"></canvas>
+</div>
+
+<div class="controls">
+  <button id="btn-play">Putar</button>
+  <button id="btn-pause">Jeda</button>
+  <span id="time-display">0.00 / 28.73 s</span>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+const TOTAL_DURATION = 28.73;
+const FPS = 30;
+const canvas = document.getElementById('webgl-canvas');
+
+// Subtitle cues & sentences
+const SENTENCES = [
+  { t0: 0.1,  t1: 1.62, text: "WAIT!" },
+  { t0: 1.62, t1: 3.76, text: "Jangan di-scroll dulu!" },
+  { t0: 3.76, t1: 6.36, text: "Kenalin, gue Syehan." },
+  { t0: 6.36, t1: 8.98, text: "Dan selamat datang di Cerita Syehan!" },
+  { t0: 8.98, t1: 15.65, text: "Di akun ini, gue bakal nyeritain realita hidup sehari-hari yang rada gaje..." },
+  { t0: 15.65, t1: 21.60, text: "Mulai dari overthinking jam 2 pagi, sampai inovasi gila!" },
+  { t0: 21.60, t1: 26.32, text: "Biar gak ketinggalan, klik tombol FOLLOW sekarang!" },
+  { t0: 26.32, t1: 28.73, text: "Gas, kita mulai!" }
+];
+
+// Three.js Scene Setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0xF5EBE0); // Modern warm aesthetic tone
+
+const camera = new THREE.PerspectiveCamera(38, 9 / 16, 0.1, 100);
+camera.position.set(0, 1.8, 5.2);
+
+const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false, preserveDrawingBuffer: true });
+renderer.setSize(1080, 1920, false);
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.outputEncoding = THREE.sRGBEncoding;
+
+// Helper: Rounded Box geometry
+function createRoundedBox(w, h, d, r, s) {
+  const geom = new THREE.BoxGeometry(w, h, d);
+  return geom;
+}
+
+// -------------------------------------------------------------
+// LIGHTING (Modern Warm Creator Ambience)
+// -------------------------------------------------------------
+const ambientLight = new THREE.AmbientLight(0xFFF7ED, 0.75);
+scene.add(ambientLight);
+
+const keyLight = new THREE.DirectionalLight(0xFFFBF0, 1.3);
+keyLight.position.set(3, 5, 4);
+keyLight.castShadow = true;
+keyLight.shadow.mapSize.width = 1024;
+keyLight.shadow.mapSize.height = 1024;
+keyLight.shadow.camera.near = 0.5;
+keyLight.shadow.camera.far = 15;
+scene.add(keyLight);
+
+const fillLight = new THREE.DirectionalLight(0xE0F2FE, 0.55);
+fillLight.position.set(-3.5, 3, 2);
+scene.add(fillLight);
+
+const rimLight = new THREE.DirectionalLight(0xFDE68A, 0.85);
+rimLight.position.set(0, 4, -3.5);
+scene.add(rimLight);
+
+// -------------------------------------------------------------
+// ENVIRONMENT / MODERN STUDIO ROOM
+// -------------------------------------------------------------
+const roomGroup = new THREE.Group();
+scene.add(roomGroup);
+
+// Floor
+const floorMat = new THREE.MeshStandardMaterial({ color: 0xE8DFD5, roughness: 0.85 });
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(20, 20), floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.position.y = -0.5;
+floor.receiveShadow = true;
+roomGroup.add(floor);
+
+// Back Wall
+const wallMat = new THREE.MeshStandardMaterial({ color: 0xF7F4EB, roughness: 0.9 });
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(20, 12), wallMat);
+wall.position.set(0, 5, -3.5);
+wall.receiveShadow = true;
+roomGroup.add(wall);
+
+// Minimalist Wooden Desk
+const woodMat = new THREE.MeshStandardMaterial({ color: 0x9A6C4B, roughness: 0.65 });
+const deskTop = new THREE.Mesh(new THREE.BoxGeometry(3.6, 0.12, 1.6), woodMat);
+deskTop.position.set(0, 1.15, -0.2);
+deskTop.castShadow = true;
+deskTop.receiveShadow = true;
+roomGroup.add(deskTop);
+
+const legMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.5 });
+[[-1.6, -0.9], [1.6, -0.9], [-1.6, 0.5], [1.6, 0.5]].forEach(([lx, lz]) => {
+  const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 1.15, 12), legMat);
+  leg.position.set(lx, 0.57, lz - 0.2);
+  leg.castShadow = true;
+  roomGroup.add(leg);
+});
+
+// Ultra-wide Curved Computer Monitor
+const screenGroup = new THREE.Group();
+screenGroup.position.set(0, 1.75, -0.85);
+
+const screenFrame = new THREE.Mesh(new THREE.BoxGeometry(2.4, 1.0, 0.06), new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.4 }));
+screenGroup.add(screenFrame);
+
+// Screen display (Modern Code Editor + Wave)
+const screenCanvas = document.createElement('canvas');
+screenCanvas.width = 512;
+screenCanvas.height = 256;
+const sg = screenCanvas.getContext('2d');
+sg.fillStyle = '#0B132B';
+sg.fillRect(0, 0, 512, 256);
+sg.fillStyle = '#1C2541';
+sg.fillRect(10, 10, 492, 236);
+sg.fillStyle = '#48CAE4';
+sg.font = 'bold 20px monospace';
+sg.fillText('CERITA_SYEHAN.py', 25, 45);
+sg.fillStyle = '#90E0EF';
+sg.font = '14px monospace';
+sg.fillText('import syehan_life as life', 25, 80);
+sg.fillText('def daily_chaos():', 25, 110);
+sg.fillText('    brain_overthinking()', 45, 140);
+sg.fillText('    launch_crazy_experiment()', 45, 170);
+sg.fillText('    print("Gas Kita Mulai!")', 45, 200);
+
+const screenTex = new THREE.CanvasTexture(screenCanvas);
+const screenDisplay = new THREE.Mesh(new THREE.PlaneGeometry(2.32, 0.92), new THREE.MeshBasicMaterial({ map: screenTex }));
+screenDisplay.position.z = 0.035;
+screenGroup.add(screenDisplay);
+
+// Monitor Stand
+const standPole = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, 0.6, 12), legMat);
+standPole.position.set(0, -0.35, -0.05);
+screenGroup.add(standPole);
+const standBase = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.03, 24), legMat);
+standBase.position.set(0, -0.6, 0.1);
+screenGroup.add(standBase);
+roomGroup.add(screenGroup);
+
+// Ceramic Coffee Mug
+const mugMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, roughness: 0.3 });
+const mug = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.18, 16), mugMat);
+mug.position.set(0.9, 1.3, -0.1);
+mug.castShadow = true;
+roomGroup.add(mug);
+
+// Modern Desk Lamp
+const lampMat = new THREE.MeshStandardMaterial({ color: 0xF59E0B, roughness: 0.3, metalness: 0.2 });
+const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 16), lampMat);
+lampBase.position.set(-1.2, 1.23, -0.3);
+const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.7, 8), lampMat);
+lampStem.position.set(-1.2, 1.58, -0.3);
+lampStem.rotation.z = -0.25;
+const lampShade = new THREE.Mesh(new THREE.ConeGeometry(0.18, 0.22, 16, 1, true), lampMat);
+lampShade.position.set(-1.05, 1.9, -0.3);
+lampShade.rotation.z = 0.8;
+roomGroup.add(lampBase, lampStem, lampShade);
+
+// Modern Indoor Plant in Pot
+const potMat = new THREE.MeshStandardMaterial({ color: 0xD97706, roughness: 0.7 });
+const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.12, 0.28, 16), potMat);
+pot.position.set(1.4, 1.35, -0.35);
+const plantLeafMat = new THREE.MeshStandardMaterial({ color: 0x15803D, roughness: 0.5 });
+for (let i = 0; i < 5; i++) {
+  const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.14, 8, 8), plantLeafMat);
+  leaf.scale.set(0.5, 1.4, 0.2);
+  const ang = (i / 5) * Math.PI * 2;
+  leaf.position.set(1.4 + Math.cos(ang) * 0.12, 1.55, -0.35 + Math.sin(ang) * 0.12);
+  leaf.rotation.z = Math.cos(ang) * 0.4;
+  roomGroup.add(leaf);
+}
+roomGroup.add(pot);
+
+// -------------------------------------------------------------
+// CHARACTER RIG: SYEHAN (Modern Era Young Creator)
+// -------------------------------------------------------------
+const syehan = new THREE.Group();
+syehan.position.set(0, 0, 0.45);
+scene.add(syehan);
+
+// Materials
+const skinMat = new THREE.MeshStandardMaterial({ color: 0xF3C3A0, roughness: 0.55 });
+const hoodieMat = new THREE.MeshStandardMaterial({ color: 0x78909C, roughness: 0.85 }); // Modern sage-slate hoodie
+const pantsMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.7 });
+const hairMat = new THREE.MeshStandardMaterial({ color: 0x2A1C16, roughness: 0.6 }); // Warm dark coffee
+const sneakerMat = new THREE.MeshStandardMaterial({ color: 0xF8FAFC, roughness: 0.4 });
+const eyeWhiteMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+const eyePupilMat = new THREE.MeshBasicMaterial({ color: 0x1E293B });
+const mouthMat = new THREE.MeshBasicMaterial({ color: 0x881337 });
+
+// Hips / Torso
+const hips = new THREE.Group();
+hips.position.y = 1.05;
+syehan.add(hips);
+
+const body = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.95, 0.6), hoodieMat);
+body.position.y = 0.5;
+body.castShadow = true;
+hips.add(body);
+
+// Hoodie Pocket (Kangoroo pocket)
+const pocket = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.32, 0.08), hoodieMat);
+pocket.position.set(0, 0.35, 0.32);
+hips.add(pocket);
+
+// Legs & Sneakers (Seated / Relaxed pose behind desk)
+function createLeg(x) {
+  const legG = new THREE.Group();
+  legG.position.set(x, 0, 0);
+  const thigh = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.55, 0.32), pantsMat);
+  thigh.position.set(0, -0.25, 0.15);
+  thigh.rotation.x = Math.PI / 3; // Sitting posture
+  legG.add(thigh);
+  
+  const shin = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.55, 0.26), pantsMat);
+  shin.position.set(0, -0.55, 0.45);
+  legG.add(shin);
+  
+  const shoe = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.22, 0.55), sneakerMat);
+  shoe.position.set(0, -0.85, 0.58);
+  legG.add(shoe);
+  return legG;
+}
+const legL = createLeg(-0.28);
+const legR = createLeg(0.28);
+hips.add(legL, legR);
+
+// Arms & Hands
+const armL = new THREE.Group();
+armL.position.set(-0.52, 0.85, 0);
+const armMeshL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.65, 0.24), hoodieMat);
+armMeshL.position.y = -0.3;
+armL.add(armMeshL);
+const handL = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), skinMat);
+handL.position.y = -0.68;
+armL.add(handL);
+hips.add(armL);
+
+const armR = new THREE.Group();
+armR.position.set(0.52, 0.85, 0);
+const armMeshR = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.65, 0.24), hoodieMat);
+armMeshR.position.y = -0.3;
+armR.add(armMeshR);
+const handR = new THREE.Mesh(new THREE.SphereGeometry(0.14, 12, 12), skinMat);
+handR.position.y = -0.68;
+armR.add(handR);
+hips.add(armR);
+
+// Head & Face
+const headGroup = new THREE.Group();
+headGroup.position.set(0, 1.15, 0);
+hips.add(headGroup);
+
+const head = new THREE.Mesh(new THREE.BoxGeometry(1.0, 1.05, 0.95), skinMat);
+head.position.y = 0.5;
+head.castShadow = true;
+headGroup.add(head);
+
+// Modern Messy Textured Hair
+const hairGroup = new THREE.Group();
+const hairTop = new THREE.Mesh(new THREE.BoxGeometry(1.08, 0.38, 1.05), hairMat);
+hairTop.position.set(0, 1.02, 0.02);
+hairGroup.add(hairTop);
+
+// Hair tufts / bangs
+for (let i = -3; i <= 3; i++) {
+  const tuft = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 6), hairMat);
+  tuft.position.set(i * 0.14, 0.95, 0.52);
+  tuft.rotation.x = 0.45;
+  tuft.rotation.z = i * -0.08;
+  hairGroup.add(tuft);
+}
+headGroup.add(hairGroup);
+
+// Big Expressive Eyes
+function createEye(x) {
+  const eyeG = new THREE.Group();
+  eyeG.position.set(x, 0.52, 0.48);
+  const white = new THREE.Mesh(new THREE.SphereGeometry(0.14, 14, 14), eyeWhiteMat);
+  white.scale.set(1.0, 1.25, 0.4);
+  eyeG.add(white);
+  const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 12), eyePupilMat);
+  pupil.scale.set(1.0, 1.2, 0.45);
+  pupil.position.z = 0.04;
+  eyeG.add(pupil);
+  const shine = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 8), eyeWhiteMat);
+  shine.position.set(-0.03, 0.04, 0.08);
+  eyeG.add(shine);
+  return eyeG;
+}
+const eyeL = createEye(-0.25);
+const eyeR = createEye(0.25);
+headGroup.add(eyeL, eyeR);
+
+// Eyebrows
+const browMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.6 });
+const browL = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.06), browMat);
+browL.position.set(-0.25, 0.74, 0.5);
+const browR = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.06, 0.06), browMat);
+browR.position.set(0.25, 0.74, 0.5);
+headGroup.add(browL, browR);
+
+// Mouth
+const mouth = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.1, 0.05), mouthMat);
+mouth.position.set(0, 0.22, 0.5);
+headGroup.add(mouth);
+
+// Modern Wireless Headphones around Neck
+const phoneMat = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.3 });
+const neckBand = new THREE.Mesh(new THREE.TorusGeometry(0.48, 0.05, 8, 24, Math.PI * 1.3), phoneMat);
+neckBand.rotation.x = Math.PI / 2 + 0.3;
+neckBand.position.set(0, 0.12, 0.05);
+headGroup.add(neckBand);
+
+const earpadL = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 16), phoneMat);
+earpadL.position.set(-0.46, 0.18, 0.15);
+earpadL.rotation.z = 0.4;
+const earpadR = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.1, 16), phoneMat);
+earpadR.position.set(0.46, 0.18, 0.15);
+earpadR.rotation.z = -0.4;
+headGroup.add(earpadL, earpadR);
+
+// -------------------------------------------------------------
+// DYNAMIC PROPS & MEME POP-UPS
+// -------------------------------------------------------------
+const propsGroup = new THREE.Group();
+scene.add(propsGroup);
+
+// Prop 1: Name Badge "SYEHAN | Cerita Syehan"
+const badgeCanvas = document.createElement('canvas');
+badgeCanvas.width = 512;
+badgeCanvas.height = 180;
+const bgc = badgeCanvas.getContext('2d');
+bgc.fillStyle = '#1E293B';
+bgc.beginPath();
+bgc.roundRect(10, 10, 492, 160, 24);
+bgc.fill();
+bgc.lineWidth = 8;
+bgc.strokeStyle = '#38BDF8';
+bgc.stroke();
+bgc.fillStyle = '#FFFFFF';
+bgc.font = 'bold 54px sans-serif';
+bgc.textAlign = 'center';
+bgc.fillText('SYEHAN', 256, 85);
+bgc.fillStyle = '#38BDF8';
+bgc.font = 'bold 28px sans-serif';
+bgc.fillText('• CERITA SYEHAN •', 256, 135);
+const badgeTex = new THREE.CanvasTexture(badgeCanvas);
+const badgeMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.8, 0.65), new THREE.MeshBasicMaterial({ map: badgeTex, transparent: true }));
+badgeMesh.position.set(0, 2.8, 0.8);
+badgeMesh.visible = false;
+propsGroup.add(badgeMesh);
+
+// Prop 2: Floating Modern Smartphone with Notifications (Meme Scene 3)
+const phoneGroup = new THREE.Group();
+phoneGroup.position.set(0.9, 2.2, 0.6);
+const phoneBody = new THREE.Mesh(new THREE.BoxGeometry(0.55, 1.05, 0.05), new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.2 }));
+phoneGroup.add(phoneBody);
+
+const notifCanvas = document.createElement('canvas');
+notifCanvas.width = 256;
+notifCanvas.height = 480;
+const ntc = notifCanvas.getContext('2d');
+ntc.fillStyle = '#0F172A';
+ntc.fillRect(0, 0, 256, 480);
+ntc.fillStyle = '#EF4444';
+ntc.beginPath();
+ntc.roundRect(15, 25, 226, 80, 14);
+ntc.fill();
+ntc.fillStyle = '#FFFFFF';
+ntc.font = 'bold 20px sans-serif';
+ntc.fillText('💬 Chat (99+)', 30, 60);
+ntc.font = '14px sans-serif';
+ntc.fillText('Paket COD udah di depan...', 30, 85);
+
+ntc.fillStyle = '#F59E0B';
+ntc.beginPath();
+ntc.roundRect(15, 125, 226, 80, 14);
+ntc.fill();
+ntc.fillStyle = '#FFFFFF';
+ntc.font = 'bold 20px sans-serif';
+ntc.fillText('⚠️ Deadline Besok', 30, 160);
+ntc.font = '14px sans-serif';
+ntc.fillText('Progres: Masih Nol Persen', 30, 185);
+
+const notifTex = new THREE.CanvasTexture(notifCanvas);
+const notifMesh = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 1.0), new THREE.MeshBasicMaterial({ map: notifTex }));
+notifMesh.position.z = 0.03;
+phoneGroup.add(notifMesh);
+phoneGroup.visible = false;
+propsGroup.add(phoneGroup);
+
+// Prop 3: Floating 02:00 AM Digital Clock & Idea Bulb (Scene 4)
+const clockCanvas = document.createElement('canvas');
+clockCanvas.width = 380;
+clockCanvas.height = 140;
+const ckc = clockCanvas.getContext('2d');
+ckc.fillStyle = '#1E293B';
+ckc.beginPath();
+ckc.roundRect(10, 10, 360, 120, 20);
+ckc.fill();
+ckc.fillStyle = '#EF4444';
+ckc.font = 'bold 58px monospace';
+ckc.textAlign = 'center';
+ckc.fillText('02:00 AM', 190, 92);
+const clockTex = new THREE.CanvasTexture(clockCanvas);
+const clockMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 0.52), new THREE.MeshBasicMaterial({ map: clockTex, transparent: true }));
+clockMesh.position.set(-0.8, 2.7, 0.4);
+clockMesh.visible = false;
+propsGroup.add(clockMesh);
+
+// Golden Idea Lightbulb
+const bulbGroup = new THREE.Group();
+bulbGroup.position.set(0, 3.1, 0.5);
+const bulbMesh = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), new THREE.MeshStandardMaterial({ color: 0xFBBF24, emissive: 0xFBBF24, emissiveIntensity: 1.8 }));
+bulbGroup.add(bulbMesh);
+bulbGroup.visible = false;
+propsGroup.add(bulbGroup);
+
+// Quirky 3D Invention Gadget (Mini Turbo Prop)
+const gadgetGroup = new THREE.Group();
+gadgetGroup.position.set(0, 1.45, 0.2);
+const gizmoCore = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.22, 0.35, 16), new THREE.MeshStandardMaterial({ color: 0x0EA5E9, metalness: 0.6, roughness: 0.3 }));
+const gizmoRotor = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.04, 0.12), new THREE.MeshStandardMaterial({ color: 0xF59E0B }));
+gizmoRotor.position.y = 0.2;
+gadgetGroup.add(gizmoCore, gizmoRotor);
+gadgetGroup.visible = false;
+propsGroup.add(gadgetGroup);
+
+// Prop 4: Pixel Deal-With-It Sunglasses (Scene 5)
+const shadesGroup = new THREE.Group();
+const shMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+const shL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.06), shMat);
+shL.position.x = -0.25;
+const shR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.18, 0.06), shMat);
+shR.position.x = 0.25;
+const shBridge = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.05, 0.06), shMat);
+shadesGroup.add(shL, shR, shBridge);
+shadesGroup.position.set(0, 2.8, 0.6);
+shadesGroup.visible = false;
+propsGroup.add(shadesGroup);
+
+// Giant TikTok "FOLLOW +" Button
+const followCanvas = document.createElement('canvas');
+followCanvas.width = 512;
+followCanvas.height = 160;
+const flc = followCanvas.getContext('2d');
+flc.fillStyle = '#EF4444'; // TikTok red
+flc.beginPath();
+flc.roundRect(10, 10, 492, 140, 70);
+flc.fill();
+flc.fillStyle = '#FFFFFF';
+flc.font = 'bold 56px sans-serif';
+flc.textAlign = 'center';
+flc.fillText('FOLLOW +', 256, 102);
+const followTex = new THREE.CanvasTexture(followCanvas);
+const followMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 0.65), new THREE.MeshBasicMaterial({ map: followTex, transparent: true }));
+followMesh.position.set(0, 2.9, 0.85);
+followMesh.visible = false;
+propsGroup.add(followMesh);
+
+// 3D Confetti Particles
+const CONFETTI_COUNT = 75;
+const confettiInst = new THREE.InstancedMesh(new THREE.BoxGeometry(0.09, 0.09, 0.02), new THREE.MeshBasicMaterial({ color: 0xffffff }), CONFETTI_COUNT);
+const confColors = [0x38BDF8, 0xF59E0B, 0xEF4444, 0x10B981, 0x8B5CF6];
+const dummy = new THREE.Object3D();
+const confettiData = [];
+for (let i = 0; i < CONFETTI_COUNT; i++) {
+  confettiInst.setColorAt(i, new THREE.Color(confColors[i % confColors.length]));
+  confettiData.push({
+    x: (Math.random() - 0.5) * 3.5,
+    y: 1.5 + Math.random() * 3.0,
+    z: (Math.random() - 0.5) * 2.0,
+    rx: Math.random() * 6,
+    ry: Math.random() * 6,
+    vy: -1.2 - Math.random() * 2.0
+  });
+}
+confettiInst.instanceColor.needsUpdate = true;
+confettiInst.visible = false;
+scene.add(confettiInst);
+
+// -------------------------------------------------------------
+// KINETIC TIKTOK SUBTITLE OVERLAY (THREE.JS TEXTURE PLANE)
+// -------------------------------------------------------------
+const subCanvas = document.createElement('canvas');
+subCanvas.width = 1080;
+subCanvas.height = 600;
+const subCtx = subCanvas.getContext('2d');
+const subTex = new THREE.CanvasTexture(subCanvas);
+const subMat = new THREE.MeshBasicMaterial({ map: subTex, transparent: true, depthTest: false });
+const subPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.33), subMat);
+subPlane.position.set(0, -0.95, -2.8);
+subPlane.renderOrder = 9999;
+camera.add(subPlane);
+scene.add(camera);
+
+function drawSubtitles(t) {
+  subCtx.clearRect(0, 0, 1080, 600);
+  
+  let currentSentence = null;
+  for (const s of SENTENCES) {
+    if (t >= s.t0 && t < s.t1) {
+      currentSentence = s;
+      break;
+    }
+  }
+  if (!currentSentence) {
+    subPlane.visible = false;
+    subTex.needsUpdate = true;
+    return;
+  }
+  
+  subPlane.visible = true;
+  subCtx.save();
+  subCtx.font = '900 52px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  subCtx.textAlign = 'center';
+  
+  // Text wrap helper
+  const text = currentSentence.text;
+  const words = text.split(' ');
+  let line = '';
+  const lines = [];
+  for (let w of words) {
+    const testLine = line + (line ? ' ' : '') + w;
+    if (subCtx.measureText(testLine).width > 880 && line) {
+      lines.push(line);
+      line = w;
+    } else {
+      line = testLine;
+    }
+  }
+  lines.push(line);
+  
+  const lineH = 68;
+  const startY = 300 - ((lines.length - 1) * lineH) / 2;
+  
+  lines.forEach((l, idx) => {
+    const ly = startY + idx * lineH;
+    
+    // Black pill background behind subtitles
+    const lw = subCtx.measureText(l).width;
+    subCtx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+    subCtx.beginPath();
+    subCtx.roundRect(540 - lw / 2 - 24, ly - 44, lw + 48, 58, 16);
+    subCtx.fill();
+    
+    // Glowing text
+    subCtx.fillStyle = '#FBBF24'; // Yellow pop highlight
+    subCtx.fillText(l, 540, ly);
+  });
+  
+  subCtx.restore();
+  subTex.needsUpdate = true;
+}
+
+// -------------------------------------------------------------
+// MAIN TIMELINE ANIMATION FUNCTION (renderFrame at time t)
+// -------------------------------------------------------------
+function renderFrame(t) {
+  // 1. Camera Animation & Staging
+  if (t < 3.76) {
+    // SHOT 1: THE HOOK
+    const shake = t < 0.6 ? Math.sin(t * 45) * 0.05 * Math.exp(-t * 4) : 0;
+    camera.position.set(shake, 1.8, 3.8); // Closer zoom punch
+    camera.lookAt(0, 1.85, 0.45);
+    
+    // Syehan raises hand to camera: "Stop/Wait!"
+    armR.rotation.x = -1.4;
+    armR.rotation.z = -0.4;
+    handR.position.set(0.1, -0.2, 0.4);
+    headGroup.rotation.y = Math.sin(t * 8) * 0.05;
+    headGroup.rotation.x = -0.1;
+    
+    // Shocked / alert eyebrows
+    browL.position.y = 0.78;
+    browR.position.y = 0.78;
+    mouth.scale.set(1.4, 1.8, 1.0); // Open mouth "Wait!"
+    
+  } else if (t < 8.98) {
+    // SHOT 2: GREETING & MODERN ROOM REVEAL
+    const p = (t - 3.76) / (8.98 - 3.76);
+    camera.position.set(0.3 * Math.sin(p * Math.PI), 1.85, 4.6);
+    camera.lookAt(0, 1.7, 0);
+    
+    // Syehan waving friendly
+    armR.rotation.x = -1.1;
+    armR.rotation.z = Math.sin(t * 7) * 0.4 + 0.6;
+    armL.rotation.x = 0;
+    
+    // Smile
+    headGroup.rotation.set(0.05, Math.sin(t * 3) * 0.08, 0.02);
+    mouth.scale.set(1.2, 0.6, 1.0);
+    browL.position.y = 0.74; browR.position.y = 0.74;
+    
+    // Show Name Badge
+    badgeMesh.visible = true;
+    badgeMesh.scale.setScalar(Math.min(1.0, (t - 3.76) * 3));
+    
+  } else if (t < 15.65) {
+    // SHOT 3: ABSURD PROBLEMS & OVERWHELM
+    badgeMesh.visible = false;
+    camera.position.set(-0.2, 1.8, 4.2);
+    camera.lookAt(0, 1.75, 0.2);
+    
+    // Syehan scratching head in confusion
+    armR.rotation.x = -1.8;
+    armR.rotation.z = -0.6;
+    armR.rotation.y = 0.3;
+    handR.position.set(-0.15, 0.2, 0.1);
+    
+    headGroup.rotation.z = -0.15; // Tilted head
+    browL.position.y = 0.70; browR.position.y = 0.78; // One brow raised
+    mouth.scale.set(0.8, 0.7, 1.0);
+    
+    // Phone & Notifs floating
+    phoneGroup.visible = true;
+    phoneGroup.position.y = 2.2 + Math.sin(t * 3) * 0.08;
+    phoneGroup.rotation.y = Math.sin(t * 2) * 0.2;
+    
+  } else if (t < 21.60) {
+    // SHOT 4: OVERTHINKING & CRAZY INNOVATION
+    phoneGroup.visible = false;
+    
+    // Room mood changes
+    ambientLight.color.setHex(0x38BDF8); // Midnight blue
+    ambientLight.intensity = 0.55;
+    keyLight.color.setHex(0xFBBF24); // Warm golden desk lamp
+    
+    camera.position.set(0, 1.9, 4.3);
+    camera.lookAt(0, 1.8, 0);
+    
+    // Clock 02:00 AM visible
+    clockMesh.visible = true;
+    
+    if (t > 17.5) {
+      // Lightbulb pops ON! Idea moment!
+      bulbGroup.visible = true;
+      bulbGroup.position.y = 3.1 + Math.sin(t * 6) * 0.05;
+      
+      gadgetGroup.visible = true;
+      gizmoRotor.rotation.y = t * 12; // Spinning gizmo
+      
+      headGroup.rotation.set(-0.1, 0, 0);
+      mouth.scale.set(1.3, 1.2, 1.0);
+      browL.position.y = 0.77; browR.position.y = 0.77;
+    }
+    
+  } else {
+    // SHOT 5: SWAG CTA & GRAND FINALE
+    clockMesh.visible = false;
+    bulbGroup.visible = false;
+    gadgetGroup.visible = false;
+    
+    ambientLight.color.setHex(0xFFF7ED);
+    ambientLight.intensity = 0.8;
+    
+    camera.position.set(0, 1.85, 4.5);
+    camera.lookAt(0, 1.7, 0);
+    
+    // Deal With It Sunglasses drop
+    shadesGroup.visible = true;
+    const dropProg = Math.min(1.0, (t - 21.6) * 1.5);
+    shadesGroup.position.set(0, 2.8 - dropProg * 0.75, 0.85); // Drops over eyes
+    
+    // Follow button drops and bounces
+    followMesh.visible = true;
+    const bounceProg = Math.min(1.0, (t - 22.0) * 2.0);
+    followMesh.position.y = 3.5 - bounceProg * 0.7 + Math.sin(t * 8) * 0.04;
+    
+    // Both thumbs pointing at button
+    armL.rotation.x = -1.2; armL.rotation.z = -0.5;
+    armR.rotation.x = -1.2; armR.rotation.z = 0.5;
+    
+    // Confetti particles
+    confettiInst.visible = true;
+    for (let i = 0; i < CONFETTI_COUNT; i++) {
+      const p = confettiData[i];
+      const age = t - 21.6;
+      dummy.position.set(p.x, p.y + p.vy * age, p.z);
+      dummy.rotation.set(p.rx + age * 2, p.ry + age * 2, 0);
+      dummy.updateMatrix();
+      confettiInst.setMatrixAt(i, dummy.matrix);
+    }
+    confettiInst.instanceMatrix.needsUpdate = true;
+  }
+  
+  // Natural subtle breathing
+  hips.position.y = 1.05 + Math.sin(t * 3.5) * 0.02;
+  
+  // Draw subtitles (texture update)
+  drawSubtitles(t);
+
+  // Render 3D Scene + Subtitles
+  renderer.render(scene, camera);
+}
+
+// -------------------------------------------------------------
+// EXPORT FOR HEADLESS RUNNER (render.mjs / GitHub Actions)
+// -------------------------------------------------------------
+window.DUR = TOTAL_DURATION;
+window.READY = true;
+window.renderAt = (t) => { renderFrame(t); };
+window.getCanvasDataURL = (type = 'image/jpeg', q = 0.95) => canvas.toDataURL(type, q);
+window.setResolution = (w, h) => {
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  subCanvas.width = w;
+  subCanvas.height = h;
+};
+
+// Local Interactive Player
+let isPlaying = false;
+let startTime = 0;
+let pauseTime = 0;
+
+const btnPlay = document.getElementById('btn-play');
+const btnPause = document.getElementById('btn-pause');
+const timeDisplay = document.getElementById('time-display');
+
+function animate() {
+  if (isPlaying) {
+    const elapsed = (performance.now() - startTime) / 1000;
+    if (elapsed >= TOTAL_DURATION) {
+      isPlaying = false;
+      renderFrame(TOTAL_DURATION);
+      timeDisplay.textContent = `${TOTAL_DURATION.toFixed(2)} / ${TOTAL_DURATION.toFixed(2)} s`;
+      return;
+    }
+    renderFrame(elapsed);
+    timeDisplay.textContent = `${elapsed.toFixed(2)} / ${TOTAL_DURATION.toFixed(2)} s`;
+    requestAnimationFrame(animate);
+  }
+}
+
+btnPlay.addEventListener('click', () => {
+  if (!isPlaying) {
+    isPlaying = true;
+    startTime = performance.now() - pauseTime * 1000;
+    animate();
+  }
+});
+
+btnPause.addEventListener('click', () => {
+  if (isPlaying) {
+    isPlaying = false;
+    pauseTime = (performance.now() - startTime) / 1000;
+  }
+});
+
+// Render initial frame (t=0)
+renderFrame(0);
+
+})();
+</script>
+</body>
+</html>

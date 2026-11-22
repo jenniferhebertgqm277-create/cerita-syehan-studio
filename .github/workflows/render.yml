@@ -1,0 +1,79 @@
+name: Render Cerita Syehan
+
+on:
+  workflow_dispatch:
+    inputs:
+      resolution:
+        description: 'Resolusi WxH (TikTok 1080x1920)'
+        default: '1080x1920'
+      fps:
+        description: 'FPS output (30 atau 60)'
+        default: '30'
+      smoke:
+        description: 'Tes cepat (hanya 30 frame)'
+        type: boolean
+        default: false
+      tag:
+        description: 'Tag release video'
+        default: 'eps0-v1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Pasang FFmpeg, Font & Dependensi
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ffmpeg fonts-noto-core fonts-liberation
+          npm init -y >/dev/null
+          npm i playwright@1.49.1
+          npx playwright install --with-deps chromium
+          pip install numpy scipy
+
+      - name: Render Frame + Mix Audio + Encode MP4
+        env:
+          RES: ${{ inputs.resolution }}
+          FPS: ${{ inputs.fps }}
+          MAX_FRAMES: ${{ inputs.smoke && '30' || '0' }}
+        run: node render.mjs
+
+      - name: Upload Video ke GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ inputs.smoke }}" = "true" ]; then
+            TAG="smoke-${{ github.run_number }}"
+            PRE="--prerelease"
+          else
+            TAG="${{ inputs.tag }}"
+            PRE=""
+          fi
+          
+          OUTPUT_NAME="cerita_syehan_${TAG}_${{ inputs.resolution }}.mp4"
+          cp out/video.mp4 "out/$OUTPUT_NAME"
+          
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "out/$OUTPUT_NAME" out/preview.jpg --clobber
+          else
+            gh release create "$TAG" "out/$OUTPUT_NAME" out/preview.jpg $PRE \
+              --title "Cerita Syehan Episode 0 ($TAG)" \
+              --notes "Render otomatis Episode 0 'Perkenalan Syehan' (Resolusi: ${{ inputs.resolution }}, ${{ inputs.fps }} FPS). Dibuat via Cerita Syehan Cloud Studio."
+          fi
